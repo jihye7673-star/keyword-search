@@ -14,20 +14,21 @@ export function sizeLevel(rank: number): 1 | 2 | 3 | 4 | 5 {
   return rank === 6 ? 4 : 5;
 }
 
+/** 상자나 알약 없이 글자 크기, 굵기, 색으로만 위계를 준다. 1위만 포인트 색을 쓴다. */
 const COMPACT = {
-  1: "bg-primary px-4 py-1 text-3xl font-bold text-primary-foreground hover:bg-primary/90",
-  2: "px-2 text-2xl font-semibold hover:bg-muted",
-  3: "px-2 text-lg font-medium hover:bg-muted",
-  4: "px-2 text-base text-muted-foreground hover:bg-muted",
-  5: "px-2 text-sm text-muted-foreground hover:bg-muted",
+  1: "text-[2.125rem] font-bold text-primary",
+  2: "text-2xl font-semibold",
+  3: "text-lg font-medium",
+  4: "text-[0.9375rem] text-muted-foreground",
+  5: "text-[0.8125rem] text-muted-foreground",
 } as const;
 
 const LARGE = {
-  1: "bg-primary px-5 py-1.5 text-4xl font-bold text-primary-foreground hover:bg-primary/90",
-  2: "px-3 text-3xl font-semibold hover:bg-muted",
-  3: "px-3 text-xl font-medium hover:bg-muted",
-  4: "px-2 text-base text-muted-foreground hover:bg-muted",
-  5: "px-2 text-sm text-muted-foreground hover:bg-muted",
+  1: "text-5xl font-bold text-primary",
+  2: "text-3xl font-semibold",
+  3: "text-xl font-medium",
+  4: "text-base text-muted-foreground",
+  5: "text-sm text-muted-foreground",
 } as const;
 
 export function KeywordLink({
@@ -49,7 +50,7 @@ export function KeywordLink({
       href={keywordHref(categoryId, keyword)}
       title={`기사 ${count}건`}
       className={cn(
-        "rounded-full leading-snug tracking-tight whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "rounded px-0.5 leading-snug tracking-tight whitespace-nowrap underline-offset-4 decoration-primary decoration-[1.5px] outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50",
         (large ? LARGE : COMPACT)[level],
       )}
     >

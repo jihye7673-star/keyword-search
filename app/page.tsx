@@ -11,9 +11,12 @@ export default async function HomePage() {
 
   return (
     <main className="flex flex-col gap-5 pb-6">
-      <header className="flex flex-col gap-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight">오늘의 뉴스 키워드</h1>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+      <header className="flex max-w-3xl flex-col gap-2">
+        <h1 className="text-[clamp(1.75rem,4.2vw,2.5rem)] leading-tight font-bold tracking-tight">오늘의 뉴스 키워드</h1>
+        <p className="max-w-[60ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+          최근 2주 헤드라인에서 가장 많이 다뤄진 말을 카테고리별로 모았어요. 글자가 클수록 더 많이 다뤄졌고, 키워드를 누르면 뜻과 관련 뉴스를 볼 수 있어요.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground">
           <Badge variant="secondary">12시간마다 갱신</Badge>
           <span>{formatDateTime(map.updatedAt)} 기준 · 최근 2주 뉴스</span>
         </div>
