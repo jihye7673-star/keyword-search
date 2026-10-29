@@ -157,6 +157,51 @@ describe("키워드 맵", () => {
   });
 });
 
+describe("세계 카테고리", () => {
+  const worldItems: Item[] = [
+    { id: "w1", title: "미국 중간선거 접전 지역 늘어", source: "서울일보", at: "2026-10-29T02:00:00Z" },
+    { id: "w2", title: "트럼프 중간선거 부정 주장", source: "한빛뉴스", at: "2026-10-28T02:00:00Z" },
+    { id: "w3", title: "중간선거 앞두고 후보 토론", source: "대한경제", at: "2026-10-27T02:00:00Z" },
+  ];
+
+  it("카테고리 이름 대신 국제 뉴스를 모으는 검색어를 쓴다(제목에 세계가 들어간 기사가 아니라)", async () => {
+    const fetchMock = stubGoogleNews({});
+
+    await getKeywordMap({ now: NOW });
+
+    const queries = fetchMock.mock.calls.map(([input]) => new URL(String(input)).searchParams.get("q") ?? "");
+    const world = queries.find((q) => q.includes("국제"));
+    expect(world).toBeDefined();
+    expect(world).toContain("미국");
+    expect(world).toContain("when:14d");
+    expect(queries).not.toContain("세계 when:14d");
+  });
+
+  it("검색어로 쓴 나라 이름은 키워드로 뽑지 않고, 그 뉴스의 구체적인 주제를 키워드로 뽑는다", async () => {
+    stubGoogleNews({ 국제: rss(worldItems) });
+
+    const world = (await getKeywordMap({ now: NOW })).categories.find((c) => c.name === "세계")!;
+
+    expect(world.articleCount).toBe(3);
+    expect(world.keywords.map((k) => k.keyword)).toEqual(["중간선거"]);
+  });
+});
+
+describe("카테고리 검색어", () => {
+  it("사회, 문화, 스포츠는 카테고리 이름이 아니라 그 분야의 주제 낱말로 기사를 모은다", async () => {
+    const fetchMock = stubGoogleNews({});
+
+    await getKeywordMap({ now: NOW });
+
+    const queries = fetchMock.mock.calls.map(([input]) => new URL(String(input)).searchParams.get("q") ?? "");
+    const find = (word: string) => queries.find((q) => q.includes(word));
+    expect(find("경찰")).toContain("when:14d"); // 사회: 사건과 사고, 교육, 복지
+    expect(find("영화")).toContain("when:14d"); // 문화: 영화, 드라마, 공연, 전시
+    expect(find("프로야구")).toContain("when:14d"); // 스포츠: 야구, 축구, 농구 (올림픽, 골프는 정치 기사까지 끌어와 뺐다)
+    for (const name of ["사회", "문화", "스포츠"]) expect(queries).not.toContain(`${name} when:14d`);
+  });
+});
+
 describe("기사 내용을 대표하는 키워드", () => {
   const at = (n: number) => `2026-10-${29 - n}T02:00:00Z`;
 
