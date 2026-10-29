@@ -31,6 +31,12 @@
       "skillPath": "skills/workflow/define-product/SKILL.md",
       "computedHash": "a7fba03cb0068fc814f5b051e421d31d3422c5d37ee7c44a8b10e1c83cdf1344"
     },
+    "design-taste-frontend": {
+      "source": "nexu-io/open-design",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "71bfa1ae4e018797aa2d0329aca278d3ba9b8796362628c4751ea3683d6e1b01"
+    },
     "explain-visually": {
       "source": "toy-crane/skills",
       "sourceType": "github",
