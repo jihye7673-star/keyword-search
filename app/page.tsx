@@ -1,67 +1,39 @@
-import Image from "next/image";
-import { ArrowUpRightIcon, TriangleIcon } from "lucide-react";
+import { KeywordMapView } from "@/components/keyword-map/keyword-map-view";
+import { RefreshAlert } from "@/components/keyword-map/refresh-alert";
+import { SlangCorner } from "@/components/slang/slang-corner";
+import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/lib/format";
+import { getKeywordMap } from "@/modules/keyword-map";
 
-import { buttonVariants } from "@/components/ui/button";
+export default async function HomePage() {
+  const map = await getKeywordMap();
+  const failed = map.categories.filter((c) => c.failed);
 
-export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-24">
-      <div className="flex w-full max-w-xl flex-col gap-10">
-        <Image
-          className="h-5 w-[100px] dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="flex flex-col gap-5 pb-6">
+      <header className="flex flex-col gap-1.5">
+        <h1 className="text-2xl font-semibold tracking-tight">오늘의 뉴스 키워드</h1>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          <Badge variant="secondary">12시간마다 갱신</Badge>
+          <span>{formatDateTime(map.updatedAt)} 기준 · 최근 2주 뉴스</span>
+        </div>
+      </header>
+
+      {failed.length > 0 && (
+        <RefreshAlert
+          message={
+            failed.length === map.categories.length
+              ? "구글 뉴스에 연결하지 못했어요. 잠시 뒤에 다시 시도해 주세요."
+              : `${failed.map((c) => c.name).join(", ")} 카테고리의 뉴스를 불러오지 못했어요. 나머지는 그대로 보여드려요.`
+          }
         />
-        <div className="flex flex-col gap-4">
-          <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance">
-            To get started, edit the{" "}
-            <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.9em]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-foreground underline underline-offset-4"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-foreground underline underline-offset-4"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <a
-            className={buttonVariants({ size: "lg" })}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <TriangleIcon data-icon="inline-start" />
-            Deploy Now
-          </a>
-          <a
-            className={buttonVariants({ size: "lg", variant: "outline" })}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-            <ArrowUpRightIcon data-icon="inline-end" />
-          </a>
-        </div>
-      </div>
+      )}
+
+      <KeywordMapView categories={map.categories} />
+
+      <p className="text-xs text-muted-foreground">뉴스 제공: 구글 뉴스 · 키워드는 뉴스 헤드라인에서 추출해요.</p>
+
+      <SlangCorner />
     </main>
   );
 }
