@@ -1,6 +1,5 @@
-import { findCategory, searchWords } from "./categories";
-import { extractKeywords } from "./keywords";
-import { collectArticles, oldestCollectedAt } from "./snapshot";
+import { CATEGORIES, findCategory } from "./categories";
+import { collectAll, oldestCollectedAt } from "./snapshot";
 import { tokenize } from "./tokens";
 import type { Article, Keyword } from "./types";
 
@@ -19,8 +18,13 @@ export async function getCategoryDetail(
   const category = findCategory(categoryId);
   if (!category) return null;
 
-  const { articles, collectedAt } = await collectArticles(category.query, now);
-  const keywords = extractKeywords(articles, searchWords(category)).map((k) => ({
+  const { results, ranked, inputs } = await collectAll(now);
+  const index = CATEGORIES.findIndex((c) => c.id === category.id);
+  const result = results[index];
+  if (result.status === "rejected") throw result.reason;
+  const articles = inputs[index].articles;
+  const collectedAt = result.value.collectedAt;
+  const keywords = (ranked.get(category.id) ?? []).map((k) => ({
     ...k,
     // 기사는 최신순이라 처음 만나는 기사가 가장 최근 대표 기사다.
     latest: articles.find((a) => tokenize(a.title).includes(k.keyword))!,

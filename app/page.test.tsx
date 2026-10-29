@@ -11,9 +11,10 @@ function rss(titles: string[]) {
   const items = titles
     .map(
       (t, i) =>
-        `<item><title>${t} - 서울일보</title><link>https://news.google.com/rss/articles/a${i}?oc=5</link>` +
+        // 키워드가 되려면 서로 다른 언론사의 헤드라인에 나와야 하므로 기사마다 언론사를 달리한다.
+        `<item><title>${t} - 언론사${i}</title><link>https://news.google.com/rss/articles/a${i}?oc=5</link>` +
         `<pubDate>${new Date(now.getTime() - i * 3600_000).toUTCString()}</pubDate>` +
-        `<source url="https://seoul.example">서울일보</source></item>`,
+        `<source url="https://press${i}.example">언론사${i}</source></item>`,
     )
     .join("");
   return `<rss version="2.0"><channel>${items}</channel></rss>`;

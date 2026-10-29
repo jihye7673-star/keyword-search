@@ -1,6 +1,6 @@
-import { CATEGORIES, searchWords } from "./categories";
+import { allSearchWords, CATEGORIES } from "./categories";
 import { fetchFeed } from "./feed";
-import { extractKeywords } from "./keywords";
+import { rankKeywords } from "./keywords";
 import type { Article, CategorySnapshot, KeywordMap } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -27,23 +27,29 @@ export function oldestCollectedAt(times: (Date | null)[], fallback: Date) {
   return known.length === 0 ? fallback : new Date(Math.min(...known.map((t) => t.getTime())));
 }
 
-export async function getKeywordMap({ now = new Date() }: { now?: Date } = {}): Promise<KeywordMap> {
+/** 모든 카테고리의 기사를 모으고, 카테고리끼리 비교해 키워드를 고른다. */
+export async function collectAll(now: Date) {
   const results = await Promise.allSettled(CATEGORIES.map((c) => collectArticles(c.query, now)));
+  const inputs = CATEGORIES.map((category, i) => {
+    const result = results[i];
+    return { id: category.id, articles: result.status === "fulfilled" ? result.value.articles : [] };
+  });
+  return { results, ranked: rankKeywords(inputs, allSearchWords()), inputs };
+}
+
+export async function getKeywordMap({ now = new Date() }: { now?: Date } = {}): Promise<KeywordMap> {
+  const { results, ranked, inputs } = await collectAll(now);
   // 전부 실패한 결과를 화면으로 만들면 12시간 캐시에 남아 이전에 모은 키워드를 덮어쓴다. 오류로 넘겨 이전 결과를 지킨다.
   if (results.every((r) => r.status === "rejected")) {
     throw new Error("구글 뉴스에서 어떤 카테고리도 불러오지 못했어요.");
   }
-  const categories: CategorySnapshot[] = CATEGORIES.map((category, i) => {
-    const result = results[i];
-    const articles = result.status === "fulfilled" ? result.value.articles : [];
-    return {
-      id: category.id,
-      name: category.name,
-      articleCount: articles.length,
-      keywords: extractKeywords(articles, searchWords(category)),
-      failed: result.status === "rejected",
-    };
-  });
+  const categories: CategorySnapshot[] = CATEGORIES.map((category, i) => ({
+    id: category.id,
+    name: category.name,
+    articleCount: inputs[i].articles.length,
+    keywords: ranked.get(category.id) ?? [],
+    failed: results[i].status === "rejected",
+  }));
   const times = results.map((r) => (r.status === "fulfilled" ? r.value.collectedAt : null));
   return { updatedAt: oldestCollectedAt(times, now).toISOString(), categories };
 }

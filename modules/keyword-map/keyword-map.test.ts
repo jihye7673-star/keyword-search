@@ -157,6 +157,72 @@ describe("키워드 맵", () => {
   });
 });
 
+describe("기사 내용을 대표하는 키워드", () => {
+  const at = (n: number) => `2026-10-${29 - n}T02:00:00Z`;
+
+  it("여러 카테고리에 나오는 단어는 가장 많이 다뤄진 카테고리에서만 키워드가 된다", async () => {
+    stubGoogleNews({
+      경제: rss([
+        { id: "a1", title: "AI 반도체 수요 급증", source: "서울일보", at: at(0) },
+        { id: "a2", title: "AI 투자 확대 속 반도체", source: "한빛뉴스", at: at(1) },
+      ]),
+      "IT 과학": rss([
+        { id: "i1", title: "AI 모델 출시 경쟁", source: "서울일보", at: at(0) },
+        { id: "i2", title: "AI 서비스 공개 잇따라", source: "한빛뉴스", at: at(1) },
+        { id: "i3", title: "AI 칩 시장 주목", source: "대한경제", at: at(2) },
+        { id: "i4", title: "AI 비서 새 기능", source: "미래신문", at: at(3) },
+      ]),
+    });
+
+    const map = await getKeywordMap({ now: NOW });
+    const names = (n: string) => map.categories.find((c) => c.name === n)!.keywords.map((k) => k.keyword);
+
+    expect(names("IT/과학")).toContain("AI");
+    expect(names("경제")).not.toContain("AI");
+  });
+
+  it("서로 다른 언론사 두 곳 이상의 헤드라인에 나오지 않은 단어는 키워드가 아니다", async () => {
+    stubGoogleNews({
+      경제: rss([
+        { id: "s1", title: "코스피 급락 마감", source: "서울일보", at: at(0) },
+        { id: "s2", title: "코스피 하락 지속", source: "서울일보", at: at(1) },
+      ]),
+    });
+
+    const eco = (await getKeywordMap({ now: NOW })).categories.find((c) => c.name === "경제")!;
+
+    expect(eco.keywords).toEqual([]);
+  });
+
+  it("주제를 말해 주지 않는 일반적인 말(책임, 변화 같은)은 키워드가 아니다", async () => {
+    stubGoogleNews({
+      경제: rss([
+        { id: "g1", title: "책임 공방 가열 변화 예고", source: "서울일보", at: at(0) },
+        { id: "g2", title: "책임 논란 확산 변화 조짐", source: "한빛뉴스", at: at(1) },
+      ]),
+    });
+
+    const eco = (await getKeywordMap({ now: NOW })).categories.find((c) => c.name === "경제")!;
+
+    expect(eco.keywords).toEqual([]);
+  });
+});
+
+describe("서술어는 키워드가 아니다", () => {
+  it("동사의 과거형(알렸다, 밝혔다)은 명사형 키워드로 뽑지 않는다", async () => {
+    stubGoogleNews({
+      경제: rss([
+        { id: "v1", title: "합의안 공개 알렸다", source: "서울일보", at: "2026-10-29T02:00:00Z" },
+        { id: "v2", title: "합의안 처리 알렸다", source: "한빛뉴스", at: "2026-10-28T02:00:00Z" },
+      ]),
+    });
+
+    const eco = (await getKeywordMap({ now: NOW })).categories.find((c) => c.name === "경제")!;
+
+    expect(eco.keywords.map((k) => k.keyword)).toEqual(["합의안"]);
+  });
+});
+
 describe("키워드 상세", () => {
   const detailFeed: Item[] = [
     { id: "d1", title: "코스피 하락, 기준금리 부담", source: "서울일보", at: "2026-10-29T02:00:00Z" },

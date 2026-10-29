@@ -1,6 +1,5 @@
-import { findCategory, searchWords } from "./categories";
-import { extractKeywords } from "./keywords";
-import { collectArticles, WINDOW_DAYS } from "./snapshot";
+import { CATEGORIES, findCategory } from "./categories";
+import { collectAll, WINDOW_DAYS } from "./snapshot";
 import { tokenize } from "./tokens";
 import type { Article, Keyword } from "./types";
 
@@ -33,8 +32,12 @@ export async function getKeywordDetail(
   const category = findCategory(categoryId);
   if (!category) return null;
 
-  const { articles: all } = await collectArticles(category.query, now);
-  const keywords: Keyword[] = extractKeywords(all, searchWords(category));
+  const { results, ranked, inputs } = await collectAll(now);
+  const index = CATEGORIES.findIndex((c) => c.id === category.id);
+  const failure = results[index];
+  if (failure.status === "rejected") throw failure.reason;
+  const all = inputs[index].articles;
+  const keywords: Keyword[] = ranked.get(category.id) ?? [];
   const found = keywords.find((k) => k.keyword === keyword);
   if (!found) return null;
 

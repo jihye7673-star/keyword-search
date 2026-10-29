@@ -20,3 +20,8 @@ export function findCategory(id: string) {
 export function searchWords(category: { query: string }) {
   return category.query.split(" ");
 }
+
+/** 모든 카테고리의 검색어 낱말. 어느 카테고리에서도 키워드로 뽑지 않는다. */
+export function allSearchWords() {
+  return [...new Set(CATEGORIES.flatMap((c) => searchWords(c)))];
+}
